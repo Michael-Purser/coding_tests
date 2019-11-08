@@ -3,10 +3,17 @@
 #include <cstdlib>
 #include <mutex>
 #include <string>
+#include <signal.h>
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
+
+enum class Selector
+{
+  BASH_THREAD,
+  CPP_THREAD
+};
 
 struct threadPIDVector
 {
@@ -18,19 +25,22 @@ struct threadPIDVector
   std::mutex mutex;
 };
 
-void threadPIDVector::initialize(int size)
+void
+threadPIDVector::initialize(int size)
 {
   std::lock_guard<std::mutex> guard{mutex};
   return PID_vector.assign(size, 0);
 }
 
-int threadPIDVector::getPID(int index)
+int
+threadPIDVector::getPID(int index)
 {
   std::lock_guard<std::mutex> guard{mutex};
   return PID_vector.at(index);
 }
 
-void threadPIDVector::setPID(int index, int PID)
+void
+threadPIDVector::setPID(int index, int PID)
 {
   std::lock_guard<std::mutex> guard{mutex};
   PID_vector.at(index) = PID;
@@ -38,68 +48,80 @@ void threadPIDVector::setPID(int index, int PID)
 
 threadPIDVector thread_PID_vector;
 
-void func(int index)
+void
+func(const int index, const Selector selector)
 {
-  // std::cout << "Hello from thread" << std::endl;
   thread_PID_vector.setPID(index, static_cast<int>(getpid()));
-  std::cout << "Hello from thread " << index << ", my PID is: " << thread_PID_vector.getPID(index) << std::endl;
-  system("/home/michael/Documents/CODING/unordered_maps/test.sh > /dev/null &");
-  std::cout << "Hello from end of thread function" << std::endl;
+  std::cout << "[Thread " << index << "] \t PID: " << thread_PID_vector.getPID(index) << std::endl;
+  switch(selector)
+  {
+    case Selector::BASH_THREAD: 
+      system("/home/michael/Documents/CODING/unordered_maps/test.sh > /dev/null");
+      break;
+
+    case Selector::CPP_THREAD:
+      while(true)
+      {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+      break;
+  };
+  std::cout << "[Thread " << index << "] \t Exiting" << std::endl;
 }
 
 int
 main(int argc, char** argv)
 {
+  // // Configs:
+  // int number_of_threads = 3;
+  // Selector selector = Selector::BASH_THREAD;
 
-  // ********* MAP OF INTS AND STRINGS ********* //
+  // std::cout << "[Main thread] \t PID: " << static_cast<int>(getpid()) << std::endl;
 
-  // Unordered map with int keys and string values:
-  std::unordered_map<int, std::string> map;
+  // thread_PID_vector.initialize(number_of_threads);
 
-  // Insert some values into the map:
-  map.insert({1, "hello"});
-  map.insert({3, "bye"});
-  map.insert({300, "dfsedfdsf"});
-  map.insert({56, "banana"});
+  // std::unordered_map<int, std::thread> map2;
+  // for(int i = 0; i < number_of_threads; ++i)
+  // {
+  //   map2.insert({i, std::thread(func, i, selector)});
+  // }
 
-  // Get map info:
-  std::cout << "Map size: " << map.size() << std::endl;
-  std::cout << "Map max_size: " << map.max_size() << std::endl;
+  // std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-  // Print some of the strings:
-  std::cout << "Value at 1: " << map.at(1) << std::endl;
+  // for(auto& pair : map2)
+  // {
+  //   std::cout << "Joining thread at key: " << pair.first << "..." << std::endl;
+  //   pair.second.join();
+  //   std::cout << "Joined thread at key: " << pair.first << std::endl;
+  // }
 
-  // Iterate over the map:
-  for(const auto& pair : map)
+  pid_t pid = fork();
+  
+  if(pid == 0)
   {
-    std::cout << "Value at "<< pair.first << ": " << pair.second << std::endl;
+    std::cout << "[CHILD] \t Parent PID: \t \t " << static_cast<int>(getppid()) << std::endl;
+    std::cout << "[CHILD] \t PID: \t \t \t " << static_cast<int>(getpid()) << std::endl;
+    std::cout << "[CHILD] \t PID from fork: \t " << static_cast<int>(pid) << std::endl;
+
+    std::cout << "[CHILD] \t I am a good ol' C++ loop" << std::endl;
+    while(true)
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::cout << "[CHILD] \t Hello" << std::endl;
+    }
+
+    // execl("/home/michael/Documents/CODING/unordered_maps/test.sh", NULL);
   }
 
-
-
-
-
-  // ********* MAP OF INTS AND THREADS ********* //
-
-  std::unordered_map<int, std::thread> map2;
-
-  thread_PID_vector.initialize(4);
-
-  // Insert some values into the map:
-  map2.insert({1, std::thread(func, 0)});
-  map2.insert({3, std::thread(func, 1)});
-  map2.insert({300, std::thread(func, 2)});
-  map2.insert({56, std::thread(func, 3)});
-
-  std::this_thread::sleep_for(std::chrono::seconds(2));
-
-  for(auto& pair : map2)
+  else
   {
-    // pair.second.~thread();
-    pair.second.join();
-    std::cout << "Joining thread at key: " << pair.first << std::endl;
-  }
+    std::cout << "[PARENT] \t PID: \t \t \t " << static_cast<int>(getpid()) << std::endl;
+    std::cout << "[PARENT] \t Child PID: \t \t " << static_cast<int>(pid) << std::endl;
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    std::cout << "[PARENT] \t Child is annoying, killing " << std::endl;
+    kill(pid, SIGTERM);
+  }
 
   return 0;
 }
