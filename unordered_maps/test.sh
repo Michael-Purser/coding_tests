@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo -e "[CHILD] \t I am a bash!"
+echo -e "[CHILD BASH] \t I am a bash!"
 
 while true; do
-  echo -e "[CHILD] \t Hello!"
+  echo -e "[CHILD BASH] \t Hello!"
   sleep .2
 done
