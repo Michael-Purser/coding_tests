@@ -1,2 +1,6 @@
+<<<<<<< HEAD
 *.vscode
 **/build
+=======
+./*/build/*
+>>>>>>> Updated and renamed bad example
