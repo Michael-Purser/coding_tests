@@ -12,6 +12,27 @@ enum class Selector
   BASH_LOOP
 };
 
+// Global vector, needed for the signal handler
+std::vector<pid_t> children_id_vector;
+
+// Global variable to set when program should terminate
+bool terminate = false;
+
+void
+signalHandler(int sig)
+{
+  std::cout << "[HANDLER] \t Heard signal with id: " << sig << std::endl;
+  std::cout << "[HANDLER] \t Children are very annoying, killing" << std::endl;
+  for(auto& pid : children_id_vector)
+  {
+    kill(pid, SIGTERM);
+    std::cout << "[HANDLER] \t Killed PID: \t " << static_cast<int>(pid) << std::endl;
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+  terminate = true;
+}
+
 int
 main(int argc, char** argv)
 {
@@ -23,7 +44,6 @@ main(int argc, char** argv)
 
   int number_of_children = 2;
 
-  std::vector<pid_t> children_id_vector;
   children_id_vector.assign(number_of_children, -1);
 
   for(int i=0; i<number_of_children; i++)
@@ -61,17 +81,20 @@ main(int argc, char** argv)
   std::cout << "[PARENT] \t Children PIDs:" << std::endl;
   for(auto& pid : children_id_vector)
   {
-    std::cout << "\t \t \t \t \t " << static_cast<int>(pid) << std::endl;
+    std::cout << " \t \t \t \t \t " <<static_cast<int>(pid) << std::endl;
   }
 
-  // Start and kill child process; wait 2s before and after to give time to start and time to shutdown
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-  std::cout << "[PARENT] \t Children are very annoying, killing" << std::endl;
-  for(auto& pid : children_id_vector)
+  // Register signal handler
+  signal(SIGTERM, signalHandler);
+
+  // Wait in loop
+  while(!terminate)
   {
-    kill(pid, SIGTERM);
+    std::cout << "[PARENT] \t Listening to children" << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+  std::cout << "[PARENT] \t Can go to sleep now" << std::endl;
 
   return 0;
 }
