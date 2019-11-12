@@ -4,5 +4,5 @@ echo -e "[CHILD BASH] \t I am a bash!"
 
 while true; do
   echo -e "[CHILD BASH] \t Hello!"
-  sleep .2
+  sleep .5
 done

@@ -1,0 +1,10 @@
+[Unit]
+Description=test_services_for_threading
+
+[Service]
+Type=forking
+ExecStart=/home/michael/Documents/CODING/unordered_maps/test_service.sh
+TimeoutSec=900
+
+[Install]
+WantedBy=multi-user.target
