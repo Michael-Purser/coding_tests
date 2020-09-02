@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>hello_world</name>
+  <version>0.0.1</version>
+
+  <author email="michael.purser@outlook.be">Michael Purser</author>
+  <maintainer email="michael.purser@outlook.be">Michael Purser</maintainer>
+
+  <description>
+    The hello_world package for this workspace.
+  </description>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+
+</package>
