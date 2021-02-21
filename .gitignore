@@ -1,7 +1,2 @@
 *.vscode
 **/build
-**/devel
-**/logs
-**/.catkin_tools
-*.bag
-*.pcap
